@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- App icon: the DronoSim brand mark from index.html on the app's dark panel colour.
+       build/icon.png (1024 px) is rendered from this file; electron-builder makes .icns and .ico from it. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#17253d"/>
+      <stop offset="1" stop-color="#0b1220"/>
+    </linearGradient>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg)"/>
+  <rect x="104" y="104" width="816" height="816" rx="181" fill="none" stroke="#22d3ee" stroke-opacity="0.18" stroke-width="8"/>
+  <g transform="translate(232 232) scale(17.5)" fill="none" stroke="#22d3ee" stroke-width="2.2" stroke-linecap="round">
+    <circle cx="8" cy="8" r="5"/><circle cx="24" cy="8" r="5"/><circle cx="8" cy="24" r="5"/><circle cx="24" cy="24" r="5"/>
+    <path d="M8 8 24 24M24 8 8 24"/>
+    <rect x="12" y="12" width="8" height="8" rx="2"/>
+  </g>
+</svg>

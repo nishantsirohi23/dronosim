@@ -1,0 +1,12 @@
+node_modules/
+dist/
+dist-demo/
+dist-pro/
+dist-viewer/
+release/
+.claude/
+.DS_Store
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/

@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DronoSim RPAS Trainer</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <div id="stage"></div>
+
+  <header id="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="8" cy="8" r="5"/><circle cx="24" cy="8" r="5"/><circle cx="8" cy="24" r="5"/><circle cx="24" cy="24" r="5"/><path d="M8 8 24 24M24 8 8 24"/><rect x="12" y="12" width="8" height="8" rx="2"/></svg>
+      <span class="name">DronoSim</span>
+      <span id="edition" class="badge"></span>
+    </div>
+    <div class="status">
+      <span id="st-arm" class="pill">DISARMED</span>
+      <span id="st-mode" class="pill strong">STABILIZE</span>
+      <span id="st-time" class="pill mono" title="Flight time">00:00</span>
+      <span id="st-gps" class="pill">NO GPS</span>
+      <span id="st-input" class="pill">Keyboard</span>
+      <span id="st-fs" class="pill" data-state="crit" hidden></span>
+    </div>
+    <div class="reg" title="Registration number (UIN) - edit in Settings"><span class="lbl">UIN</span><span id="st-reg" class="mono"></span></div>
+    <nav class="tools">
+      <button id="btn-scene" title="Choose scene (L)"><span class="ico">&#9638;</span><span id="scene-name">Scene</span></button>
+      <button id="btn-view" title="Cycle camera view (C)"><span class="ico">&#9673;</span><span id="view-name">Pilot</span></button>
+      <button id="btn-tod" title="Day / dusk / night (N)"><span class="ico">&#9728;</span><span id="tod-name">Day</span></button>
+      <button id="btn-weather" title="Weather: clear / overcast / fog / rain (J)"><span class="ico">&#9729;</span><span id="weather-name">Clear</span></button>
+      <button id="btn-capture-top" title="Capture overhead trail for assessment (Shift+P). P captures the current view.">Capture trail</button>
+      <button id="btn-mission" title="Mission planner for AUTO waypoint missions (M)">Mission</button>
+      <button id="btn-challenge" title="Structured challenge">Challenge</button>
+      <button id="btn-controller" title="Controller setup and calibration">Controller</button>
+      <button id="btn-settings" title="Settings">Settings</button>
+      <button id="btn-help" title="Help and keyboard shortcuts (H)">Help</button>
+      <span id="vr-slot"></span>
+    </nav>
+  </header>
+
+  <div id="demo-banner" hidden>DEMO VERSION - operational geofence active (max <b id="demo-alt"></b> m height, <b id="demo-rad"></b> m radius)</div>
+
+  <aside id="telemetry" class="panel">
+    <div class="panel-head"><h2>Telemetry</h2><button class="collapse" data-collapse="telemetry" title="Collapse">&#8722;</button></div>
+    <div class="panel-body">
+      <canvas id="heading-tape"></canvas>
+      <div class="att-row">
+        <canvas id="attitude"></canvas>
+        <div class="att-side">
+          <div class="tel big"><label>ALT</label><b data-tel="alt">0.0</b><u>m</u></div>
+          <div class="tel big"><label>V/S</label><b data-tel="vs">0.0</b><u>m/s</u></div>
+          <div class="tel big"><label>GS</label><b data-tel="gs">0.0</b><u>m/s</u></div>
+        </div>
+      </div>
+      <div class="mode-detail" data-tel="modedetail"></div>
+      <div class="grid">
+        <div class="tel"><label>HDG</label><b data-tel="hdg">000</b><u>&deg;</u></div>
+        <div class="tel"><label>AIRSPD</label><b data-tel="as">0.0</b><u>m/s</u></div>
+        <div class="tel"><label>ROLL</label><b data-tel="roll">0</b><u>&deg;</u></div>
+        <div class="tel"><label>PITCH</label><b data-tel="pitch">0</b><u>&deg;</u></div>
+        <div class="tel"><label>HOME</label><b data-tel="dist">--</b><u>m</u></div>
+        <div class="tel"><label>BRG</label><b data-tel="brg">--</b></div>
+        <div class="tel wide"><label>POS</label><b data-tel="ne">0 N 0 E</b></div>
+        <div class="tel wide"><label>WIND</label><b data-tel="wind">0</b><u data-tel="winddir"></u></div>
+        <div class="tel"><label>THR</label><b data-tel="thr">0</b><u>%</u></div>
+        <div class="tel"><label>HOVER</label><b data-tel="hover">0</b><u>%</u></div>
+        <div class="tel wide"><label>GPS</label><b data-tel="gps">Searching</b><u>HDOP <span data-tel="hdop">--</span></u></div>
+        <div class="tel wide"><label>FLIGHT</label><b data-tel="ftime">00:00</b></div>
+        <div class="tel wide"><label>MISSION</label><b data-tel="mis">None uploaded</b></div>
+        <div class="tel wide"><label>NEXT WP</label><b data-tel="wpd">--</b><u data-tel="wpb"></u></div>
+      </div>
+      <div class="batt">
+        <div class="tel"><label>BATT</label><b data-tel="volt">16.80</b><u>V</u><b class="sm" data-tel="pct">100</b><u>%</u></div>
+        <div class="batt-bar"><i id="batt-fill"></i></div>
+        <div class="batt-sub"><span><span data-tel="cell">4.20</span> V/cell</span><span><span data-tel="amp">0.0</span> A</span><span><span data-tel="mah">0</span> mAh</span></div>
+      </div>
+      <div class="motors" title="Motor outputs (M1 FR, M2 RL, M3 FL, M4 RR)">
+        <div class="motor-bar"><i></i><span>M1</span></div>
+        <div class="motor-bar"><i></i><span>M2</span></div>
+        <div class="motor-bar"><i></i><span>M3</span></div>
+        <div class="motor-bar"><i></i><span>M4</span></div>
+      </div>
+      <div class="sensors" id="sensors" title="Simulated obstacle sensors (B toggles braking in Loiter)">
+        <div class="sens-head"><span>OBSTACLE SENSORS</span><b id="sens-state">ON</b></div>
+        <div class="sens-body">
+          <div class="sens-grid">
+            <span class="s-f" id="sens-front">--</span>
+            <span class="s-l" id="sens-left">--</span>
+            <i class="s-drone"></i>
+            <span class="s-r" id="sens-right">--</span>
+            <span class="s-b" id="sens-back">--</span>
+          </div>
+          <div class="sens-side">
+            <div class="tel"><label>AGL</label><b id="sens-down">0.0</b><u>m</u></div>
+            <div class="tel"><label>VIS</label><b id="vis">--</b><u>m</u></div>
+            <div class="tel"><label>NEAR</label><b id="sens-near" class="sm">--</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <aside id="assess" class="panel right">
+    <div class="panel-head"><h2>Trail &amp; Assessment</h2><button class="collapse" data-collapse="assess" title="Collapse">&#8722;</button></div>
+    <div class="panel-body">
+      <section>
+        <h3>Flight path trail</h3>
+        <div class="row">
+          <label class="chk"><input type="checkbox" id="trail-visible"> Show trail</label>
+          <label class="chk"><input type="checkbox" id="trail-ground"> Ground track</label>
+        </div>
+        <div class="row">
+          <label for="trail-color">Colour by</label>
+          <select id="trail-color">
+            <option value="altitude">Height</option>
+            <option value="speed">Speed</option>
+            <option value="mode">Flight mode</option>
+            <option value="solid">Solid magenta</option>
+          </select>
+        </div>
+        <div class="legend" id="trail-legend"></div>
+        <div class="row">
+          <label for="trail-width">Width</label>
+          <input type="range" id="trail-width" min="1" max="8" step="1">
+          <button id="btn-clear-trail" class="sm" title="Clear trail (T)">Clear</button>
+        </div>
+      </section>
+      <section>
+        <h3>Reference pattern</h3>
+        <div class="seg" id="overlay-seg">
+          <button data-overlay="none">Off</button>
+          <button data-overlay="circle">Circle</button>
+          <button data-overlay="square">Square</button>
+          <button data-overlay="figure8">Fig-8</button>
+          <button data-overlay="all">All</button>
+        </div>
+        <div id="pattern-stats" class="stats"></div>
+      </section>
+      <section>
+        <h3>This flight</h3>
+        <div id="flight-stats" class="stats"></div>
+      </section>
+      <section>
+        <h3>Documentation</h3>
+        <div class="row wrap">
+          <button id="btn-cap2">Capture view</button>
+          <button id="btn-cap-top2" class="primary">Capture overhead trail</button>
+          <button id="btn-log">Export flight log (CSV)</button>
+        </div>
+        <div id="captures" class="captures"></div>
+      </section>
+    </div>
+  </aside>
+
+  <div id="challenge-hud" hidden>
+    <div class="ch-top"><span class="ch-name">Basic Proficiency</span><span id="ch-step"></span><span id="ch-time" class="mono"></span><button id="ch-abort" class="sm">Abort</button></div>
+    <div id="ch-title"></div>
+    <div id="ch-instr"></div>
+    <div class="ch-prog"><i id="ch-bar"></i></div>
+    <div id="ch-live"></div>
+  </div>
+
+  <div id="overhead-scale" hidden><div class="bar"><i></i></div><span id="os-label"></span><span class="north">N &#9650;</span><span class="hint">Drag to pan, wheel to zoom, double-click to reset, F to follow</span></div>
+  <div id="pause-overlay" hidden><div>PAUSED</div><small>Space to resume</small></div>
+  <div id="messages"></div>
+  <canvas id="minimap" title="Minimap: click to switch between whole scene and local view"></canvas>
+  <div id="gimbal-view" hidden>
+    <div class="gv-top"><b id="gv-mode">Visible</b><span id="gv-info"></span></div>
+    <div class="gv-cross"></div>
+    <div class="gv-scale" id="gv-scale" hidden><span>COLD</span><i></i><span>HOT</span></div>
+    <div class="gv-keys">G mode &middot; [ ] tilt &middot; - = zoom</div>
+  </div>
+  <div id="loading" hidden><div class="spinner"></div><b id="loading-name">Loading</b><small>Building the scene...</small></div>
+
+  <footer id="bottombar">
+    <div class="modes">
+      <button data-mode="STABILIZE"><kbd>1</kbd>Stabilize</button>
+      <button data-mode="ALT_HOLD"><kbd>2</kbd>Alt Hold</button>
+      <button data-mode="LOITER"><kbd>3</kbd>Loiter</button>
+      <button data-mode="ACRO"><kbd>4</kbd>Acro</button>
+      <button data-mode="RTL" class="auto"><kbd>5</kbd>RTL</button>
+      <button data-mode="LAND" class="auto"><kbd>6</kbd>Land</button>
+      <button data-mode="AUTO" class="auto" title="Fly the uploaded mission. Arm in Loiter first, then select Auto."><kbd>7</kbd>Auto</button>
+    </div>
+    <div class="armctl">
+      <button id="btn-arm" title="Arm / disarm (Enter)">ARM</button>
+      <button id="btn-estop" title="Double-click (or press X twice) to stop motors immediately">E-STOP</button>
+      <button id="btn-reset" title="Reset drone to the pad (R)">Reset</button>
+      <button id="btn-pause" title="Pause (Space)">Pause</button>
+    </div>
+    <canvas id="sticks" title="Stick positions (Mode 2)"></canvas>
+  </footer>
+
+  <dialog id="dlg-settings" class="dlg">
+    <form method="dialog">
+      <header><h2>Settings</h2><button value="close" class="x" aria-label="Close">&times;</button></header>
+      <div class="dlg-body cols">
+        <fieldset>
+          <legend>Documentation</legend>
+          <label>Registration number (UIN)<input id="s-reg" maxlength="24" placeholder="e.g. UIN issued on DigitalSky"></label>
+          <label>Pilot / trainee name<input id="s-pilot" maxlength="40"></label>
+          <label>Instructor<input id="s-instructor" maxlength="40"></label>
+          <label>Organisation / RPTO<input id="s-org" maxlength="48"></label>
+        </fieldset>
+        <fieldset>
+          <legend>Environment</legend>
+          <label>Time of day
+            <select id="s-tod"><option value="day">Day</option><option value="dusk">Dusk</option><option value="night">Night</option></select>
+          </label>
+          <label>Wind speed <output id="o-wspd"></output><input type="range" id="s-wspd" min="0" max="15" step="0.5"></label>
+          <label>Wind from <output id="o-wdir"></output><input type="range" id="s-wdir" min="0" max="355" step="5"></label>
+          <label>Gustiness <output id="o-gust"></output><input type="range" id="s-gust" min="0" max="1" step="0.05"></label>
+          <label class="chk"><input type="checkbox" id="s-turb"> Turbulence and gusts</label>
+          <label>Weather
+            <select id="s-weather"><option value="clear">Clear</option><option value="overcast">Overcast</option><option value="fog">Fog</option><option value="rain">Rain</option></select>
+          </label>
+        </fieldset>
+        <fieldset>
+          <legend>Graphics &amp; sound</legend>
+          <label>Graphics quality
+            <select id="s-quality"><option value="low">Low (office PCs, integrated graphics)</option><option value="medium">Medium</option><option value="high">High (dedicated GPU)</option></select>
+          </label>
+          <p class="note">Vegetation and traffic density apply when a scene is (re)loaded.</p>
+          <label class="chk"><input type="checkbox" id="s-sound"> Motor sound and beeper (K)</label>
+          <label class="chk"><input type="checkbox" id="s-minimap"> Show minimap</label>
+        </fieldset>
+        <fieldset>
+          <legend>Sensors</legend>
+          <label class="chk"><input type="checkbox" id="s-avoid"> Obstacle braking in Loiter (B)</label>
+          <label class="chk"><input type="checkbox" id="s-beeper"> Proximity beeper</label>
+          <p class="note">Sensors see 20 m ahead, behind and to the sides, and measure height above ground. Like real drones, braking only works in GPS position mode (Loiter); Stabilize and Alt Hold only warn.</p>
+        </fieldset>
+        <fieldset>
+          <legend>Flight</legend>
+          <label>RTL altitude <output id="o-rtl"></output><input type="range" id="s-rtl" min="5" max="60" step="1"></label>
+          <label>Battery drain
+            <select id="s-drain"><option value="1">Realistic (1x)</option><option value="2">Fast (2x)</option><option value="4">Training (4x)</option><option value="0">Unlimited</option></select>
+          </label>
+          <label>Keyboard stick speed <output id="o-kb"></output><input type="range" id="s-kb" min="0.4" max="2" step="0.1"></label>
+        </fieldset>
+        <fieldset id="fs-fence">
+          <legend>Geofence</legend>
+          <label class="chk"><input type="checkbox" id="s-fence"> Enable geofence (breach triggers RTL)</label>
+          <label>Max height <output id="o-falt"></output><input type="range" id="s-falt" min="10" max="120" step="5"></label>
+          <label>Max radius from home <output id="o-frad"></output><input type="range" id="s-frad" min="20" max="500" step="10"></label>
+          <p id="fence-locked" class="note" hidden>Demo version: geofence is fixed and cannot be changed.</p>
+        </fieldset>
+        <fieldset class="span2">
+          <legend>PID tuning (advanced)</legend>
+          <div class="pid-grid" id="pid-grid"></div>
+          <div class="row"><button type="button" id="btn-pid-reset" class="sm">Restore default gains</button><span class="note">Rate loop gains act on angular acceleration (rad/s&sup2; per rad/s).</span></div>
+        </fieldset>
+        <fieldset class="span2">
+          <legend>Content</legend>
+          <div class="content-grid">
+            <div><b>Drone</b><span id="c-drone"></span></div>
+            <div><b>Scenery</b><span id="c-scenery"></span></div>
+            <div><b>Challenge</b><span id="c-challenge"></span></div>
+          </div>
+          <p class="note" id="c-edition"></p>
+        </fieldset>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="dlg-controller" class="dlg wide">
+    <form method="dialog">
+      <header><h2>Controller setup</h2><button value="close" class="x" aria-label="Close">&times;</button></header>
+      <div class="dlg-body">
+        <div class="row">
+          <label for="c-source">Input</label>
+          <select id="c-source"></select>
+          <span class="note" id="c-hint">Connect a USB RC transmitter (joystick mode) or gamepad and press any button or move a stick.</span>
+        </div>
+        <div class="ctl-cols">
+          <section>
+            <h3>Live channels</h3>
+            <div id="c-channels" class="chan-list"></div>
+            <h3>Raw axes</h3>
+            <div id="c-raw" class="raw-list"></div>
+            <div id="c-buttons" class="btn-list"></div>
+          </section>
+          <section>
+            <h3>Calibration wizard</h3>
+            <div id="wiz" class="wizard"></div>
+            <h3>Mapping</h3>
+            <div id="c-map" class="map-grid"></div>
+          </section>
+        </div>
+        <details>
+          <summary>Supported controllers</summary>
+          <ul id="c-profiles" class="profiles"></ul>
+        </details>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="dlg-challenge" class="dlg">
+    <form method="dialog">
+      <header><h2 id="chd-title">Basic Proficiency Challenge</h2><button value="close" class="x" aria-label="Close">&times;</button></header>
+      <div class="dlg-body" id="chd-body"></div>
+    </form>
+  </dialog>
+
+  <dialog id="dlg-mission" class="dlg mission">
+    <form method="dialog">
+      <header><h2>Mission planner</h2><button value="close" class="x" aria-label="Close">&times;</button></header>
+      <div class="dlg-body mp">
+        <div class="mp-tools">
+          <div class="seg" id="mp-tool">
+            <button type="button" data-tool="add" title="Click the map to add a waypoint, drag a marker to move it, drag empty space to pan">Add waypoints</button>
+            <button type="button" data-tool="survey" title="Drag a rectangle on the map to generate a lawnmower survey grid">Survey area</button>
+          </div>
+          <label>Height <input type="number" id="mp-alt" min="1" max="120" step="1"> m</label>
+          <label>Speed <input type="number" id="mp-speed" min="0.5" max="12" step="0.5"> m/s</label>
+          <button type="button" id="mp-apply" class="sm" title="Set this height and speed on every waypoint and the takeoff">Apply to all</button>
+          <label>Template
+            <select id="mp-template">
+              <option value="">Choose...</option>
+              <option value="circle">Circle (12 m radius)</option>
+              <option value="square">Square (20 m sides)</option>
+              <option value="figure8">Figure-of-eight</option>
+            </select>
+          </label>
+          <span id="mp-survey" class="mp-survey" hidden>
+            <label title="Lines are spread evenly across the area, no further apart than this">Line spacing <input type="number" id="mp-spacing" min="2" max="100" step="1"> m</label>
+            <select id="mp-axis" aria-label="Survey line direction"><option value="ew">East-west lines</option><option value="ns">North-south lines</option></select>
+          </span>
+        </div>
+        <div class="mp-main">
+          <div class="mp-map"><canvas id="mp-canvas" tabindex="0" aria-label="Mission map"></canvas><div id="mp-hint" class="mp-hint"></div></div>
+          <div class="mp-side">
+            <div class="row"><label for="mp-name">Name</label><input id="mp-name" maxlength="60"></div>
+            <div class="row wrap mp-add">
+              <span class="note">Insert</span>
+              <button type="button" class="sm" data-add="TAKEOFF">Takeoff</button>
+              <button type="button" class="sm" data-add="LOITER_TIME">Loiter</button>
+              <button type="button" class="sm" data-add="RTL">RTL</button>
+              <button type="button" class="sm" data-add="LAND">Land</button>
+            </div>
+            <div id="mp-items" class="mp-items"></div>
+            <div id="mp-summary" class="stats"></div>
+            <ul id="mp-issues" class="mp-issues"></ul>
+          </div>
+        </div>
+        <div class="mp-foot">
+          <span id="mp-status" class="note"></span>
+          <label class="chk"><input type="checkbox" id="mp-show3d"> Show path in 3D</label>
+          <button type="button" id="mp-undo" title="Undo (Ctrl+Z)">Undo</button>
+          <button type="button" id="mp-clear">Clear</button>
+          <button type="button" id="mp-download" title="Replace this plan with the mission on the drone">Load from drone</button>
+          <button type="button" id="mp-import">Import JSON</button>
+          <button type="button" id="mp-export">Export JSON</button>
+          <input type="file" id="mp-file" accept=".json,application/json" hidden>
+          <button type="button" id="mp-upload" class="primary">Upload to drone</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="dlg-scene" class="dlg wide">
+    <form method="dialog">
+      <header><h2>Choose scene</h2><button value="close" class="x" aria-label="Close">&times;</button></header>
+      <div class="dlg-body"><div id="scene-cards" class="scene-cards"></div><p class="note" id="scene-note"></p></div>
+    </form>
+  </dialog>
+
+  <dialog id="dlg-help" class="dlg wide">
+    <form method="dialog">
+      <header><h2>Help</h2><button value="close" class="x" aria-label="Close">&times;</button></header>
+      <div class="dlg-body help" id="help-body"></div>
+    </form>
+  </dialog>
+</div>
+<script src="dronosim.js"></script>
+</body>
+</html>

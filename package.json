@@ -1,0 +1,54 @@
+{
+  "name": "dronosim",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Open-source browser quadcopter simulator with a PID flight controller, realistic scenes, assessment tools and a Gymnasium-style API for AI agents",
+  "keywords": [
+    "drone",
+    "quadcopter",
+    "uav",
+    "rpas",
+    "flight-simulator",
+    "three.js",
+    "webgl",
+    "pid",
+    "reinforcement-learning",
+    "gymnasium",
+    "ai-agents",
+    "pilot-training"
+  ],
+  "homepage": "https://github.com/nishantsirohi23/dronosim#readme",
+  "bugs": {
+    "url": "https://github.com/nishantsirohi23/dronosim/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nishantsirohi23/dronosim.git"
+  },
+  "license": "MIT",
+  "author": "Nishant Sirohi",
+  "type": "module",
+  "main": "electron/main.mjs",
+  "scripts": {
+    "build": "node build.mjs",
+    "dev": "node build.mjs --watch",
+    "start": "node build.mjs && node serve.mjs dist-pro",
+    "start:demo": "node build.mjs && node serve.mjs dist-demo 5174",
+    "test": "node --test test/*.test.mjs",
+    "app": "node build.mjs && electron .",
+    "app:demo": "node build.mjs && electron . --demo",
+    "package": "node package.mjs base",
+    "package:demo": "node package.mjs demo",
+    "start:pro": "node build.mjs && node serve.mjs dist-pro 5176",
+    "app:pro": "node build.mjs && electron . --pro",
+    "package:pro": "node package.mjs pro",
+    "start:base": "node build.mjs && node serve.mjs dist",
+    "benchmark": "node examples/node/benchmark.mjs"
+  },
+  "devDependencies": {
+    "electron": "44.5.1",
+    "electron-builder": "26.15.3",
+    "esbuild": "0.28.2",
+    "three": "0.186.1"
+  }
+}

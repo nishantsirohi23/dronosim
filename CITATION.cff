@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use DronoSim in research, please cite it as below."
+title: "DronoSim: an open-source browser quadcopter simulator for pilot training and AI agent research"
+authors:
+  - family-names: Sirohi
+    given-names: Nishant
+type: software
+license: MIT
+version: 1.0.0
+date-released: 2026-10-17
+repository-code: "https://github.com/nishantsirohi23/dronosim"
+keywords:
+  - drone
+  - quadcopter
+  - uav
+  - simulator
+  - reinforcement learning
+  - gymnasium
+  - pilot training

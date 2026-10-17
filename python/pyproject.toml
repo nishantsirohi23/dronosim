@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dronosim-gym"
+version = "0.1.0"
+description = "Gymnasium environments for DronoSim, an open-source quadcopter simulator with a PID flight controller, wind and realistic scenes"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+dependencies = ["gymnasium>=1.0", "numpy>=1.23"]
+keywords = ["drone", "quadcopter", "uav", "reinforcement-learning", "gymnasium", "simulator"]
+
+[tool.setuptools]
+packages = ["dronosim_gym"]
